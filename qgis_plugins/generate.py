@@ -149,3 +149,6 @@ def generate(args, directory, names):
         result = template.render(metadatas=metadatas)
         with open(path.join(directory, "plugins.xml"), "wt") as file_open:
             file_open.write(result.encode("utf-8"))
+
+        with open(path.join(directory, "index.html"), "w") as file_open:
+            pass
