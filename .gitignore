@@ -1,0 +1,6 @@
+*.pyc
+*~
+*.swp
+/QGIS_plugins.xml.egg-info
+/.venv
+/dpfe
