@@ -34,7 +34,7 @@ from glob import glob
 from ConfigParser import RawConfigParser
 from jinja2 import Environment
 
-TEMPLATE_STRING = """<?xml version = '1.0' encoding = 'UTF-8'?>
+TEMPLATE_STRING = u"""<?xml version = '1.0' encoding = 'UTF-8'?>
 <!--?xml-stylesheet type="text/xsl" href="http://qgis.camptocamp.net/plugins/plugins.xsl" ?-->
 <plugins>
 {% for metadata in metadatas %}
@@ -115,19 +115,18 @@ def generate(args, directory, names):
             parser.read(metadata_file)
 
             for key, value in parser.items("general"):
-                metadata[key] = value
+                metadata[key] = value.decode('utf8')
 
             qgisminimumversion = metadata["qgisminimumversion"].split(".")
             while len(qgisminimumversion) < 3:
                 qgisminimumversion.append("0")
             metadata["qgisminimumversion"] = ".".join(qgisminimumversion)
 
-            if hasattr(metadata, "qgismaximumversion"):
-                qgismaximumversion = metadata["qgismaximumversion"].split(".")
-                while len(qgismaximumversion) < 3:
-                    qgismaximumversion.append("0")
-            else:
-                qgismaximumversion = [qgisminimumversion[0], "99", "0"]
+            qgismaximumversion = metadata.get(
+                "qgismaximumversion",
+                "{}.99".format(qgisminimumversion[0])).split(".")
+            while len(qgismaximumversion) < 3:
+                qgismaximumversion.append("0")
             metadata["qgismaximumversion"] = ".".join(qgismaximumversion)
 
             # Set update_date to archive modification date
