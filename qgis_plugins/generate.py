@@ -122,12 +122,11 @@ def generate(args, directory, names):
                 qgisminimumversion.append("0")
             metadata["qgisminimumversion"] = ".".join(qgisminimumversion)
 
-            if hasattr(metadata, "qgismaximumversion"):
-                qgismaximumversion = metadata["qgismaximumversion"].split(".")
-                while len(qgismaximumversion) < 3:
-                    qgismaximumversion.append("0")
-            else:
-                qgismaximumversion = [qgisminimumversion[0], "99", "0"]
+            qgismaximumversion = metadata.get(
+                "qgismaximumversion",
+                "{}.99".format(qgisminimumversion[0])).split(".")
+            while len(qgismaximumversion) < 3:
+                qgismaximumversion.append("0")
             metadata["qgismaximumversion"] = ".".join(qgismaximumversion)
 
             # Set update_date to archive modification date
