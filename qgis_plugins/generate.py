@@ -34,7 +34,7 @@ from glob import glob
 from ConfigParser import RawConfigParser
 from jinja2 import Environment
 
-TEMPLATE_STRING = """<?xml version = '1.0' encoding = 'UTF-8'?>
+TEMPLATE_STRING = u"""<?xml version = '1.0' encoding = 'UTF-8'?>
 <!--?xml-stylesheet type="text/xsl" href="http://qgis.camptocamp.net/plugins/plugins.xsl" ?-->
 <plugins>
 {% for metadata in metadatas %}
@@ -115,7 +115,7 @@ def generate(args, directory, names):
             parser.read(metadata_file)
 
             for key, value in parser.items("general"):
-                metadata[key] = value
+                metadata[key] = value.decode('utf8')
 
             qgisminimumversion = metadata["qgisminimumversion"].split(".")
             while len(qgisminimumversion) < 3:
