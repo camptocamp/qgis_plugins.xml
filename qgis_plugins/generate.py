@@ -27,6 +27,8 @@
 # of the authors and should not be interpreted as representing official policies,
 # either expressed or implied, of the FreeBSD Project.
 
+import os
+import re
 import sys
 from datetime import datetime
 from os import path
@@ -45,7 +47,7 @@ TEMPLATE_STRING = u"""<?xml version = '1.0' encoding = 'UTF-8'?>
         <qgis_minimum_version>{{ metadata["qgisminimumversion"] }}</qgis_minimum_version>
         <qgis_maximum_version>{{ metadata["qgismaximumversion"] }}</qgis_maximum_version>
         <homepage><![CDATA[{{ metadata["homepage"] }}]]></homepage>
-        <file_name>{{ metadata["name"] }}.{{ metadata["version"] }}.zip</file_name>
+        <file_name>{{ metadata["filename"] }}</file_name>
         <icon>{{ metadata["icon"] }}</icon>
         <author_name><![CDATA[{{ metadata["author"] }}]]></author_name>
         <download_url>{{ metadata["download_url"] }}</download_url>
@@ -137,11 +139,12 @@ def generate(args, directory, names):
                 path.getmtime(plugin_path)
             )
 
-            # This part isn't so good ...
-            base_path_length = len(path.dirname(path.dirname(__file__)))
-            metadata["download_url"] = "http://qgis.camptocamp.net/plugins%s" % (
-                plugin_path[base_path_length:]
-            )
+            metadata["download_url"] = re.sub(
+                r"^/var/www/vhosts/qgis\.camptocamp\.net/htdocs/(.*)$",
+                r"http://qgis.camptocamp.net/\1",
+                plugin_path)
+
+            metadata["filename"] =  os.path.basename(plugin_path)
 
             metadatas.append(metadata)
 
