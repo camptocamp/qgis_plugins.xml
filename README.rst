@@ -1,13 +1,18 @@
 QGIS plugins.xml
 ================
 
-Create the plugins.xml for the plugins
+Create the plugins.xml for the plugin(s) in a folder.
 
 Install
 -------
 
 .. code:: bash
 
-   virtualenv .venv
-   .venv/bin/pip install -e .
-   .venv/bin/qgis-plugins.xml
+   make install
+
+Usage
+-----
+
+.. code:: bash
+
+   .venv/bin/qgis-plugins.xml --help

@@ -27,13 +27,14 @@
 # of the authors and should not be interpreted as representing official policies,
 # either expressed or implied, of the FreeBSD Project.
 
+
+import argparse
 import os
 import re
 import sys
 from datetime import datetime
-from os import path
 from glob import glob
-from ConfigParser import RawConfigParser
+from configparser import RawConfigParser
 from jinja2 import Environment
 
 TEMPLATE_STRING = u"""<?xml version = '1.0' encoding = 'UTF-8'?>
@@ -73,84 +74,93 @@ def datetimeformat(item):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("path", help="Path to folder or .zip file")
+    parser.add_argument("url", help="Url of the QGIS plugin repository")
+    args = parser.parse_args()
+    path = args.path
+    url = args.url
 
+    # Initialize Jinja2 environment
     environment = Environment()
     environment.filters['datetimeformat'] = datetimeformat
     template = environment.from_string(TEMPLATE_STRING)
 
-    base_directory = "."
-    if len(sys.argv) == 2:
-        base_directory = sys.argv[1]
-    path.walk(base_directory, generate, [template])
+    if not os.path.exists(path):
+        raise Exception("{} does not exists.".format(path))
 
-
-def generate(args, directory, names):
-    template = args[0]
-
-    if path.isdir(directory):
-
+    if os.path.isdir(path):
         metadatas = []
+        for dirpath, dirnames, filenames in os.walk(path):
+            visitor(dirpath, metadatas, url)
+        output_folder = path
 
-        for metadata_file in glob("%s/*.txt" % directory):
+    if os.path.isfile(path):
+        plugin_file = path
+        metadata_file = os.path.join(os.path.dirname(path), "metadata.txt")
+        metadatas = [plugin_metadata(metadata_file, plugin_file, url)]
+        output_folder = os.path.dirname(plugin_file)
 
-            # Create dictionary with some default values
-            metadata = {
-                "qgismaximumversion": "",
-                "about": "",
-                "changelog": "",
-                "experimental": False,
-                "deprecated": False,
-                "tags": "",
-                "homepage": "",
-                "repository": "",
-                "tracker": "",
-                "icon": "",
-                "category": "",
-                "uploaded_by": "",
-                "create_date": None,
-                "average_vote": "",
-                "rating_votes": "",
-            }
+    result = template.render(metadatas=metadatas)
 
-            # Read metadata from the plugin
-            parser = RawConfigParser()
-            parser.read(metadata_file)
+    with open(os.path.join(output_folder, "plugins.xml"), "wt") as file_open:
+        file_open.write(result)
 
-            for key, value in parser.items("general"):
-                metadata[key] = value.decode('utf8')
 
-            qgisminimumversion = metadata["qgisminimumversion"].split(".")
-            while len(qgisminimumversion) < 3:
-                qgisminimumversion.append("0")
-            metadata["qgisminimumversion"] = ".".join(qgisminimumversion)
+def visitor(directory, metadatas, url):
+    for metadata_file in glob("%s/*.txt" % directory):
+        split_file = metadata_file.split(".")
+        split_file[-1] = "zip"
+        plugin_path = ".".join(split_file)
+        metadatas.append(plugin_metadata(metadata_file, plugin_path, url))
 
-            qgismaximumversion = metadata.get(
-                "qgismaximumversion",
-                "{}.99".format(qgisminimumversion[0])).split(".")
-            while len(qgismaximumversion) < 3:
-                qgismaximumversion.append("0")
-            metadata["qgismaximumversion"] = ".".join(qgismaximumversion)
 
-            # Set update_date to archive modification date
-            split_file = metadata_file.split(".")
-            split_file[-1] = "zip"
-            plugin_path = ".".join(split_file)
-            metadata["update_date"] = datetime.fromtimestamp(
-                path.getmtime(plugin_path)
-            )
+def plugin_metadata(metadata_file, plugin_path, url):
+    # Create dictionary with some default values
+    metadata = {
+        "qgismaximumversion": "",
+        "about": "",
+        "changelog": "",
+        "experimental": False,
+        "deprecated": False,
+        "tags": "",
+        "homepage": "",
+        "repository": "",
+        "tracker": "",
+        "icon": "",
+        "category": "",
+        "uploaded_by": "",
+        "create_date": None,
+        "average_vote": "",
+        "rating_votes": "",
+    }
 
-            metadata["download_url"] = re.sub(
-                r"^/var/www/vhosts/qgis\.camptocamp\.net/htdocs/(.*)$",
-                r"http://qgis.camptocamp.net/\1",
-                plugin_path)
+    # Read metadata from the plugin
+    parser = RawConfigParser()
+    parser.read(metadata_file)
 
-            metadata["filename"] =  os.path.basename(plugin_path)
+    for key, value in parser.items("general"):
+        metadata[key] = value
 
-            metadatas.append(metadata)
+    qgisminimumversion = metadata["qgisminimumversion"].split(".")
+    while len(qgisminimumversion) < 3:
+        qgisminimumversion.append("0")
+    metadata["qgisminimumversion"] = ".".join(qgisminimumversion)
 
-        result = template.render(metadatas=metadatas)
-        with open(path.join(directory, "plugins.xml"), "wt") as file_open:
-            file_open.write(result.encode("utf-8"))
+    qgismaximumversion = metadata.get(
+        "qgismaximumversion",
+        "{}.99".format(qgisminimumversion[0])).split(".")
+    while len(qgismaximumversion) < 3:
+        qgismaximumversion.append("0")
+    metadata["qgismaximumversion"] = ".".join(qgismaximumversion)
 
-        with open(path.join(directory, "index.html"), "w") as file_open:
-            pass
+    # Set update_date to archive modification date
+    metadata["update_date"] = datetime.fromtimestamp(
+        os.path.getmtime(plugin_path)
+    )
+
+    metadata["download_url"] = os.path.join(url, os.path.basename(plugin_path))
+
+    metadata["filename"] =  os.path.basename(plugin_path)
+
+    return metadata
