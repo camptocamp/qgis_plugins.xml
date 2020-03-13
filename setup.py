@@ -45,7 +45,7 @@ tests_require = install_requires + [
 
 setup(
     name='QGIS-plugins.xml',
-    version='1.0.0',
+    version='1.0.1',
     description='generate plugins.xml for QGIS plugins',
     long_description=README,
     classifiers=[
