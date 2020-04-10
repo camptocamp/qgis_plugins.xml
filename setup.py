@@ -33,6 +33,7 @@ HERE = os.path.abspath(os.path.dirname(__file__))
 README = open(os.path.join(HERE, 'README.rst')).read()
 
 install_requires = [
+    'configparser',
     'bottle',
     'Jinja2',
 ]
