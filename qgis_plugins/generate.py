@@ -154,9 +154,9 @@ def plugin_metadata(metadata_file, plugin_path, url):
         qgismaximumversion.append("0")
     metadata["qgismaximumversion"] = ".".join(qgismaximumversion)
 
-    # Set update_date to archive modification date
+    # Set update_date to metadata modification date
     metadata["update_date"] = datetime.fromtimestamp(
-        os.path.getmtime(plugin_path)
+        os.path.getmtime(metadata_file)
     )
 
     metadata["download_url"] = os.path.join(url, os.path.basename(plugin_path))
